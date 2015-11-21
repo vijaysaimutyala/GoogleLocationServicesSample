@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Google Location Services Sample</string>
+    <string name="permission_location_rationale">Accessing location gives you more reliable results</string>
+    <string name="ok">OK</string>
+</resources>
