@@ -2,6 +2,8 @@ package com.example.vijsu.googlelocationservicessample;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.support.v4.app.ActivityCompat;
@@ -20,6 +22,10 @@ import com.google.android.gms.location.FusedLocationProviderApi;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.Locale;
+
 
 public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener,
@@ -29,6 +35,11 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     private final String LOG_TAG = "LocationSampleApp";
     private LocationRequest mLocationRequest;
     private TextView loc_out;
+    private Address address;
+    private Location mLastLocation;
+    private double mLatitude;
+    private double mLongitude;
+
 
     private static final int REQUEST_LOCATION = 0;
 
@@ -126,15 +137,14 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     }
     @Override
     public void onLocationChanged(Location location) {
-        Location NRT = new Location("point A");
+        /*Location NRT = new Location("point A");
         NRT.setLatitude(Double.parseDouble("17.448175"));
         NRT.setLongitude(Double.parseDouble("78.635802"));
         Log.i(LOG_TAG, String.valueOf(location.distanceTo(NRT)));
         double distance = Double.parseDouble(String.valueOf(location.distanceTo(NRT)));
-        loc_out.setText(String.valueOf(location.distanceTo(NRT)));
-        if (distance<100){
-            loc_out.setText("Approaching SEZ");
-        }
+        loc_out.setText(String.valueOf(location.distanceTo(NRT)));*/
+        loc_out.setText("latitude:"+location.getLatitude()+"\n"+"longitude:"+location.getLongitude()+"\n");
+
     }
 
     @Override
@@ -142,7 +152,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         mLocationRequest = LocationRequest.create();
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         mLocationRequest.setInterval(1000);
-        LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient,mLocationRequest,this);
+        LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
+//        mLastLocation=LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
     }
 
     @Override
@@ -153,5 +164,44 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
         Log.i(LOG_TAG,"Google API client connection has failed");
+    }
+
+    public void GetAddress(View view) {
+
+        mLastLocation=LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+        mLatitude=mLastLocation.getLatitude();
+        mLongitude=mLastLocation.getLongitude();
+        Geocoder geocoder = new Geocoder(this, Locale.getDefault());
+        String result = null;
+        try {
+            List<Address> addressList = geocoder.getFromLocation(mLatitude,mLongitude, 1);
+            if (addressList != null && addressList.size() > 0) {
+                address = addressList.get(0);
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < address.getMaxAddressLineIndex(); i++) {
+                    sb.append(address.getAddressLine(i)).append("\n");
+                }
+                sb.append(address.getAdminArea()).append("\n");
+                sb.append(address.getSubAdminArea()).append("\n");
+                sb.append(address.getThoroughfare()).append("\n");
+                sb.append(address.getSubThoroughfare()).append("\n");
+                sb.append(address.getLocality()).append("\n");
+                sb.append(address.getPremises()).append("\n");
+                sb.append(address.getPostalCode()).append("\n");
+                sb.append(address.getCountryName());
+                result = sb.toString();
+                Toast.makeText(this,result,Toast.LENGTH_LONG);
+            }
+        }
+        catch(IOException e){
+            e.printStackTrace();
+        }
+        Toast.makeText(this,"Latitude:"+ mLastLocation.getLatitude()+"\n"+"Longitude:"+ mLastLocation.getLongitude()+"\n"+
+                "AdminArea:"+address.getAdminArea()+"\n"+"SubAdminArea:"+address.getSubAdminArea()+"\n"+
+                "Thoroughfare:"+address.getThoroughfare()+"\n"+"SubThoroughFare:"+address.getSubThoroughfare()+
+                "\n"+"Locality:"+address.getLocality()+"\n"+"SubLocality:" +address.getSubLocality()+
+                "\n"+"Premises:"+address.getPremises()+"\n"+"PostalCode:"+address.getPostalCode()+
+                "\n"+"CountryName:"+address.getCountryName()+"\n"+"FeatureName:"+address.getFeatureName()+
+                "\n"+"Locale:"+address.getLocale(),Toast.LENGTH_SHORT).show();
     }
 }
